@@ -7,7 +7,6 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('authorization');
     const webhookSecret = process.env.N8N_WEBHOOK_SECRET || 'scout-n8n-token-secret-2026';
 
-    // Verify token if secret configured
     if (authHeader && authHeader !== `Bearer ${webhookSecret}`) {
       return NextResponse.json(
         { success: false, error: 'Unauthorized n8n webhook token.' },
@@ -24,8 +23,8 @@ export async function POST(request: Request) {
 
     let ingested = 0;
     for (const lead of leads) {
-      if (lead && lead.company?.name) {
-        await saveLead(lead);
+      if (lead && lead.organization?.name) {
+        saveLead(lead);
         ingested++;
       }
     }

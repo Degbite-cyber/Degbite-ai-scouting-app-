@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const body = await request.json();
     const lead: Lead = body.lead;
 
-    if (!lead || !lead.company?.name) {
+    if (!lead || !lead.organization?.name) {
       return NextResponse.json(
         { success: false, error: 'Valid lead structure is required.' },
         { status: 400 }
