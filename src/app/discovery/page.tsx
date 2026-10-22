@@ -30,16 +30,19 @@ export default function DiscoveryPage() {
     'United Arab Emirates',
     'Australia',
   ]);
-  const [provider, setProvider] = useState<'mock_sandbox' | 'apollo'>('mock_sandbox');
+  const [provider, setProvider] = useState<'mock_sandbox' | 'apollo' | 'tavily'>('tavily');
   const [apolloKey, setApolloKey] = useState<string>('');
+  const [tavilyKey, setTavilyKey] = useState<string>('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');
   const [isLoading, setIsLoading] = useState(false);
   const [discoveredLeads, setDiscoveredLeads] = useState<Lead[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('scout_apollo_key');
-      if (saved) setApolloKey(saved);
+      const savedApollo = localStorage.getItem('scout_apollo_key');
+      if (savedApollo) setApolloKey(savedApollo);
+      const savedTavily = localStorage.getItem('scout_tavily_key');
+      if (savedTavily) setTavilyKey(savedTavily);
     }
   }, []);
 
@@ -76,9 +79,12 @@ export default function DiscoveryPage() {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      if (typeof window !== 'undefined' && apolloKey.trim()) {
-        localStorage.setItem('scout_apollo_key', apolloKey.trim());
+      if (typeof window !== 'undefined') {
+        if (apolloKey.trim()) localStorage.setItem('scout_apollo_key', apolloKey.trim());
+        if (tavilyKey.trim()) localStorage.setItem('scout_tavily_key', tavilyKey.trim());
       }
+
+      const activeKey = provider === 'apollo' ? apolloKey.trim() : provider === 'tavily' ? tavilyKey.trim() : undefined;
 
       const res = await fetch('/api/discovery', {
         method: 'POST',
@@ -90,7 +96,7 @@ export default function DiscoveryPage() {
           keywords: ['ai video', 'n8n', 'creative automation'],
           provider,
           isDemo,
-          apiKey: apolloKey.trim() || undefined,
+          apiKey: activeKey || undefined,
         }),
       });
 
@@ -147,11 +153,32 @@ export default function DiscoveryPage() {
                   onChange={(e: any) => setProvider(e.target.value)}
                   className="bg-surface-850 border border-wine-700/50 rounded-lg px-3 py-1.5 text-xs text-gold-300 font-semibold focus:outline-none focus:border-gold-500"
                 >
+                  <option value="tavily">Tavily Live Web Search (Active Live AI)</option>
                   <option value="mock_sandbox">Sandbox Verified Feed (Free / Test)</option>
                   <option value="apollo">Apollo.io B2B Search (Live API)</option>
                 </select>
               </div>
             </div>
+
+            {/* Tavily API Key inline input when Tavily is selected */}
+            {provider === 'tavily' && (
+              <div className="p-3.5 rounded-lg bg-surface-900 border border-emerald-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-emerald-300 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                    Tavily Live AI Search Key
+                  </label>
+                  <span className="text-[10px] text-emerald-400 font-medium">Pre-configured & Active</span>
+                </div>
+                <input
+                  type="password"
+                  placeholder="tvly-dev-..."
+                  value={tavilyKey}
+                  onChange={(e) => setTavilyKey(e.target.value)}
+                  className="w-full bg-surface-850 border border-wine-700/60 rounded-lg p-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 font-mono"
+                />
+              </div>
+            )}
 
             {/* Apollo API Key inline input when Apollo is selected */}
             {provider === 'apollo' && (

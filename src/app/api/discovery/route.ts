@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   MockSandboxProvider,
   ApolloApiProvider,
+  TavilySearchProvider,
   DiscoverySearchParams,
 } from '@/lib/providers/discovery-engine';
 import { transformRecordToLead } from '@/lib/providers/qualification-engine';
@@ -12,7 +13,7 @@ export async function POST(request: Request) {
     const body: DiscoverySearchParams = await request.json();
     const isDemo = body.isDemo ?? false;
 
-    let provider = new MockSandboxProvider();
+    let provider: any = new MockSandboxProvider();
     if (body.provider === 'apollo') {
       const apollo = new ApolloApiProvider(body.apiKey);
       if (!apollo.isAvailable()) {
@@ -25,15 +26,27 @@ export async function POST(request: Request) {
           { status: 400 }
         );
       }
-      // @ts-ignore
       provider = apollo;
+    } else if (body.provider === 'tavily' || body.provider === 'serper_web') {
+      const tavily = new TavilySearchProvider(body.apiKey);
+      if (!tavily.isAvailable()) {
+        return NextResponse.json(
+          {
+            success: false,
+            error:
+              'Tavily API key is not configured. Please enter your Tavily API key in Integrations.',
+          },
+          { status: 400 }
+        );
+      }
+      provider = tavily;
     }
 
     const records = await provider.search(body);
-    const qualifiedLeads = records.map((rec) => transformRecordToLead(rec, isDemo));
+    const qualifiedLeads = records.map((rec: any) => transformRecordToLead(rec, isDemo));
 
     // Save all to store/database concurrently
-    await Promise.all(qualifiedLeads.map((l) => saveLead(l)));
+    await Promise.all(qualifiedLeads.map((l: any) => saveLead(l)));
 
     return NextResponse.json({
       success: true,

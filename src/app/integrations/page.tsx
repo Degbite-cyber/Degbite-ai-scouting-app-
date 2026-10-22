@@ -21,14 +21,17 @@ export default function IntegrationsPage() {
   const [isDemo, setIsDemo] = useState(true);
   const [geminiKey, setGeminiKey] = useState('');
   const [apolloKey, setApolloKey] = useState('');
-  const [serperKey, setSerperKey] = useState('');
+  const [serperKey, setSerperKey] = useState('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');
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseKey, setSupabaseKey] = useState('');
   const [n8nSecret, setN8nSecret] = useState('scout-n8n-token-secret-2026');
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
+  const [webhookUrl, setWebhookUrl] = useState('https://degbite-ai-scouting-app.vercel.app/api/n8n/webhook');
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
+      setWebhookUrl(`${window.location.origin}/api/n8n/webhook`);
       const savedApollo = localStorage.getItem('scout_apollo_key');
       if (savedApollo) setApolloKey(savedApollo);
       const savedGemini = localStorage.getItem('scout_gemini_key');
@@ -142,18 +145,21 @@ export default function IntegrationsPage() {
                 </div>
 
                 <div>
-                  <label className="text-gray-300 font-semibold block mb-1">
-                    Web Search & Signal Feed (Serper / Tavily API)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-gray-300 font-semibold">
+                      Tavily AI Live Web Search Key (Active)
+                    </label>
+                    <span className="text-[10px] text-emerald-400 font-bold bg-emerald-500/20 px-2 py-0.5 rounded">CONNECTED</span>
+                  </div>
                   <input
                     type="password"
-                    placeholder="Enter search API key..."
+                    placeholder="tvly-dev-..."
                     value={serperKey}
                     onChange={(e) => setSerperKey(e.target.value)}
-                    className="w-full bg-surface-850 border border-wine-700/50 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-gold-500"
+                    className="w-full bg-surface-850 border border-wine-700/50 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-gold-500 font-mono"
                   />
                   <p className="text-[11px] text-gray-500 mt-1">
-                    Monitors public job openings, press RFPs, and hiring notices for automated buying signals.
+                    Monitors the live internet for companies currently hiring video editors, seeking creative automation, or publishing video RFPs.
                   </p>
                 </div>
               </div>
@@ -177,7 +183,7 @@ export default function IntegrationsPage() {
                   <input
                     type="text"
                     readOnly
-                    value="http://localhost:3000/api/n8n/webhook"
+                    value={webhookUrl}
                     className="w-full bg-surface-900 border border-wine-800/40 rounded-lg p-2.5 text-xs text-gold-400 font-mono focus:outline-none"
                   />
                 </div>
