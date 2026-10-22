@@ -1,0 +1,111 @@
+{
+  "name": "AI Video Buyer Scout - Workflow A: Daily Buyer Discovery",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Daily Trigger (8:00 AM)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "values": {
+          "string": [
+            {
+              "name": "targetIndustries",
+              "value": "E-commerce & DTC,Marketing agencies,SaaS & Tech,Real Estate Marketing"
+            },
+            {
+              "name": "targetCountries",
+              "value": "United States,United Kingdom,United Arab Emirates,Australia"
+            }
+          ]
+        }
+      },
+      "name": "Set Discovery Scope",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [440, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3000/api/discovery",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"industries\": $json.targetIndustries.split(','),\n  \"countries\": $json.targetCountries.split(','),\n  \"companySizes\": [\"1-10\", \"11-50\", \"51-200\"],\n  \"keywords\": [\"ai video\", \"n8n\", \"creative automation\"],\n  \"provider\": \"mock_sandbox\",\n  \"isDemo\": true\n}"
+      },
+      "name": "Execute Discovery Engine",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [660, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:3000/api/n8n/webhook",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer scout-n8n-token-secret-2026"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"leads\": $json.leads\n}"
+      },
+      "name": "Sync Validated Leads into CRM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [880, 300]
+    }
+  ],
+  "connections": {
+    "Daily Trigger (8:00 AM)": {
+      "main": [
+        [
+          {
+            "node": "Set Discovery Scope",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Discovery Scope": {
+      "main": [
+        [
+          {
+            "node": "Execute Discovery Engine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute Discovery Engine": {
+      "main": [
+        [
+          {
+            "node": "Sync Validated Leads into CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

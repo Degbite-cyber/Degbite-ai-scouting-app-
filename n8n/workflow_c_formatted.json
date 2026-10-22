@@ -1,0 +1,74 @@
+[
+  {
+    "id": "wf-scout-digest-02",
+    "name": "AI Video Buyer Scout - Workflow C: Daily Buyer Digest",
+    "active": false,
+    "nodes": [
+      {
+        "parameters": {
+          "rule": {
+            "interval": [
+              {
+                "field": "cronExpression",
+                "expression": "0 18 * * *"
+              }
+            ]
+          }
+        },
+        "id": "55555555-5555-5555-5555-555555555555",
+        "name": "Evening Trigger (6:00 PM)",
+        "type": "n8n-nodes-base.scheduleTrigger",
+        "typeVersion": 1.1,
+        "position": [240, 300]
+      },
+      {
+        "parameters": {
+          "method": "GET",
+          "url": "http://host.docker.internal:3000/api/leads?demo=true"
+        },
+        "id": "66666666-6666-6666-6666-666666666666",
+        "name": "Fetch Today's Qualified Leads",
+        "type": "n8n-nodes-base.httpRequest",
+        "typeVersion": 4.1,
+        "position": [460, 300]
+      },
+      {
+        "parameters": {
+          "jsCode": "const leads = $input.first().json.leads || [];\nconst highPriority = leads.filter(l => (l.score?.totalScore || 0) >= 80);\n\nlet htmlReport = `<h2>David, here is your Daily AI Video Buyer Digest:</h2>`;\nhtmlReport += `<p>Found <b>${highPriority.length}</b> High-Priority Qualified Opportunities today.</p><ul>`;\n\nhighPriority.forEach(l => {\n  htmlReport += `<li><b>${l.organization.name}</b> (${l.organization.country}) - Score: ${l.score.totalScore}/100<br/>` +\n                `Signal: ${l.signal?.evidenceSummary}<br/>` +\n                `Offer: <i>${l.recommendedService}</i></li><br/>`;\n});\nhtmlReport += `</ul>`;\n\nreturn [{ json: { htmlReport, count: highPriority.length } }];"
+        },
+        "id": "77777777-7777-7777-7777-777777777777",
+        "name": "Compile Executive Digest",
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [680, 300]
+      }
+    ],
+    "connections": {
+      "Evening Trigger (6:00 PM)": {
+        "main": [
+          [
+            {
+              "node": "Fetch Today's Qualified Leads",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Fetch Today's Qualified Leads": {
+        "main": [
+          [
+            {
+              "node": "Compile Executive Digest",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "settings": {
+      "executionOrder": "v1"
+    }
+  }
+]
