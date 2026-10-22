@@ -201,6 +201,8 @@ export class ApolloApiProvider implements DiscoveryProvider {
   }
 }
 
+const DEFAULT_TAVILY_KEY = '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';
+
 export class TavilySearchProvider implements DiscoveryProvider {
   name = 'tavily';
   private customKey?: string;
@@ -210,12 +212,12 @@ export class TavilySearchProvider implements DiscoveryProvider {
   }
 
   isAvailable(): boolean {
-    const key = this.customKey || process.env.TAVILY_API_KEY;
-    return Boolean(key && key.trim().startsWith('tvly-'));
+    const key = (this.customKey || process.env.TAVILY_API_KEY || DEFAULT_TAVILY_KEY).trim();
+    return Boolean(key && key.startsWith('tvly-'));
   }
 
   async search(params: DiscoverySearchParams): Promise<RawDiscoveryRecord[]> {
-    const key = (this.customKey || params.apiKey || process.env.TAVILY_API_KEY || '').trim();
+    const key = (this.customKey || params.apiKey || process.env.TAVILY_API_KEY || DEFAULT_TAVILY_KEY).trim();
     if (!key) {
       throw new Error('Tavily API key is missing. Please configure your key in Integrations.');
     }

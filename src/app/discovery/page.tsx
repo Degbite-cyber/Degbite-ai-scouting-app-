@@ -84,7 +84,12 @@ export default function DiscoveryPage() {
         if (tavilyKey.trim()) localStorage.setItem('scout_tavily_key', tavilyKey.trim());
       }
 
-      const activeKey = provider === 'apollo' ? apolloKey.trim() : provider === 'tavily' ? tavilyKey.trim() : undefined;
+      const activeKey =
+        provider === 'apollo'
+          ? apolloKey.trim()
+          : provider === 'tavily'
+          ? (tavilyKey.trim() || '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')
+          : undefined;
 
       const res = await fetch('/api/discovery', {
         method: 'POST',
