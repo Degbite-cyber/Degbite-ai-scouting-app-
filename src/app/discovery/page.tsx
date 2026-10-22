@@ -31,9 +31,17 @@ export default function DiscoveryPage() {
     'Australia',
   ]);
   const [provider, setProvider] = useState<'mock_sandbox' | 'apollo'>('mock_sandbox');
+  const [apolloKey, setApolloKey] = useState<string>('');
   const [isLoading, setIsLoading] = useState(false);
   const [discoveredLeads, setDiscoveredLeads] = useState<Lead[]>([]);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('scout_apollo_key');
+      if (saved) setApolloKey(saved);
+    }
+  }, []);
 
   const industriesList = [
     'Marketing agencies',
@@ -68,6 +76,10 @@ export default function DiscoveryPage() {
     setIsLoading(true);
     setErrorMsg(null);
     try {
+      if (typeof window !== 'undefined' && apolloKey.trim()) {
+        localStorage.setItem('scout_apollo_key', apolloKey.trim());
+      }
+
       const res = await fetch('/api/discovery', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -78,6 +90,7 @@ export default function DiscoveryPage() {
           keywords: ['ai video', 'n8n', 'creative automation'],
           provider,
           isDemo,
+          apiKey: apolloKey.trim() || undefined,
         }),
       });
 
@@ -127,7 +140,7 @@ export default function DiscoveryPage() {
               </div>
 
               {/* Provider Selection */}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                 <span className="text-xs text-gray-300 font-medium">Provider:</span>
                 <select
                   value={provider}
@@ -139,6 +152,26 @@ export default function DiscoveryPage() {
                 </select>
               </div>
             </div>
+
+            {/* Apollo API Key inline input when Apollo is selected */}
+            {provider === 'apollo' && (
+              <div className="p-3.5 rounded-lg bg-surface-900 border border-gold-500/30 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-semibold text-gold-300 flex items-center gap-1.5">
+                    <Database className="w-3.5 h-3.5 text-gold-400" />
+                    Apollo.io API Key
+                  </label>
+                  <span className="text-[10px] text-gray-400">Saved to browser automatically</span>
+                </div>
+                <input
+                  type="password"
+                  placeholder="Paste your Apollo API key here..."
+                  value={apolloKey}
+                  onChange={(e) => setApolloKey(e.target.value)}
+                  className="w-full bg-surface-850 border border-wine-700/60 rounded-lg p-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-gold-500"
+                />
+              </div>
+            )}
 
             {/* Target Industries Selector */}
             <div className="space-y-2">

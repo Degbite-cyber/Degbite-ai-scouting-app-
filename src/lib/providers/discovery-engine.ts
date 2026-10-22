@@ -7,6 +7,7 @@ export interface DiscoverySearchParams {
   keywords: string[];
   provider: 'mock_sandbox' | 'csv_import' | 'serper_web' | 'apollo';
   isDemo?: boolean;
+  apiKey?: string;
 }
 
 export interface RawDiscoveryRecord {
@@ -127,35 +128,54 @@ export class MockSandboxProvider implements DiscoveryProvider {
 
 export class ApolloApiProvider implements DiscoveryProvider {
   name = 'apollo';
+  private customKey?: string;
+
+  constructor(apiKey?: string) {
+    this.customKey = apiKey;
+  }
 
   isAvailable(): boolean {
-    return Boolean(process.env.APOLLO_API_KEY && process.env.APOLLO_API_KEY !== 'your-apollo-api-key');
+    const key = this.customKey || process.env.APOLLO_API_KEY;
+    return Boolean(key && key !== 'your-apollo-api-key' && key.trim().length > 5);
   }
 
   async search(params: DiscoverySearchParams): Promise<RawDiscoveryRecord[]> {
-    if (!this.isAvailable()) {
+    const key = (this.customKey || params.apiKey || process.env.APOLLO_API_KEY || '').trim();
+    if (!key) {
       throw new Error(
-        'Apollo API Key is not configured. Add APOLLO_API_KEY in .env.local to enable live Apollo discovery.'
+        'Apollo API Key is not configured. Add APOLLO_API_KEY in Vercel or enter it in Integrations settings.'
       );
     }
-    // Real Apollo Organization & Contact Search endpoint integration
+
+    // Try modern Apollo endpoint with dual auth (header + body) for maximum compatibility
+    const titles = ['Founder', 'CEO', 'Head of Marketing', 'Creative Director', 'VP Marketing', 'Marketing Director'];
+    const searchBody: Record<string, any> = {
+      api_key: key,
+      person_titles: titles,
+      page: 1,
+      per_page: 10,
+    };
+
+    if (params.keywords && params.keywords.length > 0) {
+      searchBody.q_keywords = params.keywords.join(', ');
+    }
+    if (params.countries && params.countries.length > 0) {
+      searchBody.person_locations = params.countries;
+    }
+
     const response = await fetch('https://api.apollo.io/v1/mixed_people/search', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache',
-        'X-Api-Key': process.env.APOLLO_API_KEY!,
+        'X-Api-Key': key,
       },
-      body: JSON.stringify({
-        q_organization_domains: params.keywords.join(' '),
-        person_titles: ['Founder', 'CEO', 'Head of Marketing', 'Creative Director', 'VP Marketing'],
-        page: 1,
-        per_page: 10,
-      }),
+      body: JSON.stringify(searchBody),
     });
 
     if (!response.ok) {
-      throw new Error(`Apollo API returned error ${response.status}: ${await response.text()}`);
+      const errText = await response.text();
+      throw new Error(`Apollo API error (${response.status}): ${errText}`);
     }
 
     const data = await response.json();

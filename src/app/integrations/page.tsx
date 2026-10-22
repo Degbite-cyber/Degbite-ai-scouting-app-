@@ -27,8 +27,24 @@ export default function IntegrationsPage() {
   const [n8nSecret, setN8nSecret] = useState('scout-n8n-token-secret-2026');
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedApollo = localStorage.getItem('scout_apollo_key');
+      if (savedApollo) setApolloKey(savedApollo);
+      const savedGemini = localStorage.getItem('scout_gemini_key');
+      if (savedGemini) setGeminiKey(savedGemini);
+      const savedSerper = localStorage.getItem('scout_serper_key');
+      if (savedSerper) setSerperKey(savedSerper);
+    }
+  }, []);
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (typeof window !== 'undefined') {
+      if (apolloKey.trim()) localStorage.setItem('scout_apollo_key', apolloKey.trim());
+      if (geminiKey.trim()) localStorage.setItem('scout_gemini_key', geminiKey.trim());
+      if (serperKey.trim()) localStorage.setItem('scout_serper_key', serperKey.trim());
+    }
     setSaveStatus('Settings & credentials updated successfully.');
     setTimeout(() => setSaveStatus(null), 3500);
   };

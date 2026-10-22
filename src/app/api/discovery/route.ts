@@ -14,13 +14,13 @@ export async function POST(request: Request) {
 
     let provider = new MockSandboxProvider();
     if (body.provider === 'apollo') {
-      const apollo = new ApolloApiProvider();
+      const apollo = new ApolloApiProvider(body.apiKey);
       if (!apollo.isAvailable()) {
         return NextResponse.json(
           {
             success: false,
             error:
-              'Apollo API key is not configured in .env.local. Switch to Sandbox Demo mode or configure APOLLO_API_KEY.',
+              'Apollo API key is not configured. Please paste your Apollo API key on the Integrations page or set APOLLO_API_KEY in Vercel.',
           },
           { status: 400 }
         );
